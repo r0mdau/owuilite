@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./litellm-config.yaml:/app/config.yaml
+    environment:
+      - DATABASE_URL=postgresql://llmproxy:dbpassword9090@postgres:5432/litellm
+    command: --config /app/config.yaml --port 4000
+    depends_on:
+      - postgres
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: llmproxy
+      POSTGRES_PASSWORD: dbpassword9090
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: always
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - OPENAI_API_KEY=sk-1234
+      - WEBUI_AUTH=true
+    volumes:
+      - open-webui-data:/app/backend/data
+    depends_on:
+      - litellm
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  postgres-data:
+  open-webui-data:

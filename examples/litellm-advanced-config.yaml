@@ -1,0 +1,152 @@
+model_list:
+  # Production GPT-4 with load balancing
+  - model_name: gpt-4-prod
+    litellm_params:
+      model: gpt-4
+      api_key: os.environ/OPENAI_API_KEY_1
+  
+  - model_name: gpt-4-prod
+    litellm_params:
+      model: gpt-4
+      api_key: os.environ/OPENAI_API_KEY_2
+  
+  - model_name: gpt-4-prod
+    litellm_params:
+      model: gpt-4
+      api_key: os.environ/OPENAI_API_KEY_3
+
+  # Claude with fallback to GPT-4
+  - model_name: smart-assistant
+    litellm_params:
+      model: claude-3-sonnet-20240229
+      api_key: os.environ/ANTHROPIC_API_KEY
+    model_info:
+      fallbacks: ["gpt-4-prod"]
+  
+  # Custom fine-tuned model for customer support
+  - model_name: support-bot
+    litellm_params:
+      model: ft:gpt-3.5-turbo:company:support:xxx
+      api_key: os.environ/OPENAI_API_KEY
+  
+  # Internal self-hosted model via vLLM
+  - model_name: internal-llama-70b
+    litellm_params:
+      model: openai/meta-llama/Llama-2-70b-chat-hf
+      api_base: http://vllm-service.inference.svc.cluster.local:8000/v1
+      api_key: dummy
+  
+  # Embedding model for RAG
+  - model_name: embeddings
+    litellm_params:
+      model: text-embedding-3-large
+      api_key: os.environ/OPENAI_API_KEY
+
+litellm_settings:
+  # Drop unsupported parameters
+  drop_params: true
+  
+  # Request timeout (10 minutes for long-running requests)
+  request_timeout: 600
+  
+  # Enable semantic caching
+  cache: true
+  cache_params:
+    type: redis
+    host: valkey.openwebui.svc.cluster.local
+    port: 6379
+    ttl: 3600  # Cache for 1 hour
+    similarity_threshold: 0.85
+  
+  # Success callbacks for logging
+  success_callback: ["langfuse"]
+  
+  # Failure callbacks for monitoring
+  failure_callback: ["sentry"]
+
+router_settings:
+  # Load balancing strategy
+  routing_strategy: least-busy
+  
+  # Enable fallbacks
+  enable_fallbacks: true
+  
+  # Retry logic
+  num_retries: 3
+  retry_after: 5
+  
+  # Timeout for routing decisions
+  timeout: 30
+  
+  # Rate limits per model
+  rpm: 10000
+  tpm: 1000000
+
+general_settings:
+  # Master API key for authentication
+  master_key: os.environ/LITELLM_MASTER_KEY
+  
+  # Database for persistent storage
+  database_url: os.environ/DATABASE_URL
+  
+  # Store model in database
+  store_model_in_db: true
+  
+  # Max parallel requests
+  max_parallel_requests: 1000
+  
+  # Enable UI
+  ui_base_path: "/ui"
+  
+  # Cost tracking
+  track_cost_per_user: true
+  
+  # Logging
+  set_verbose: false
+  json_logs: true
+
+# Team-based access control
+team_configs:
+  # Engineering team - full access
+  - team_id: team_engineering
+    models:
+      - gpt-4-prod
+      - claude-3-sonnet
+      - internal-llama-70b
+    max_budget: 10000  # USD per month
+    budget_duration: 30d
+    tpm_limit: 100000
+    rpm_limit: 1000
+  
+  # Customer support team - limited access
+  - team_id: team_support
+    models:
+      - support-bot
+      - gpt-3.5-turbo
+    max_budget: 2000
+    budget_duration: 30d
+    tpm_limit: 50000
+    rpm_limit: 500
+  
+  # Data science team - specialized models
+  - team_id: team_datascience
+    models:
+      - gpt-4-prod
+      - internal-llama-70b
+      - embeddings
+    max_budget: 15000
+    budget_duration: 30d
+    tpm_limit: 200000
+    rpm_limit: 2000
+
+# Environment-specific settings
+environment_variables:
+  OPENAI_API_KEY_1: ${OPENAI_API_KEY_1}
+  OPENAI_API_KEY_2: ${OPENAI_API_KEY_2}
+  OPENAI_API_KEY_3: ${OPENAI_API_KEY_3}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+  LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+  DATABASE_URL: ${DATABASE_URL}
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+  SENTRY_DSN: ${SENTRY_DSN}

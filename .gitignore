@@ -1,0 +1,35 @@
+# Environment files
+.env
+
+# Docker volumes
+postgres-data/
+open-webui-data/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Backup files
+*.bak
+*.backup
+
+# Kubernetes secrets (if generated locally)
+kubernetes/secrets/
+
+# Node modules (if using MCP servers)
+node_modules/

@@ -1,0 +1,133 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openwebui-config
+  namespace: openwebui
+data:
+  OPENAI_API_BASE_URL: "http://litellm:4000/v1"
+  ENABLE_RAG_WEB_SEARCH: "true"
+  ENABLE_IMAGE_GENERATION: "true"
+  QDRANT_URI: "http://qdrant:6333"
+  ENABLE_OAUTH_SIGNUP: "true"
+  WEBUI_AUTH: "true"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openwebui-secret
+  namespace: openwebui
+type: Opaque
+stringData:
+  OPENAI_API_KEY: "sk-1234"
+  DATABASE_URL: "postgresql://openwebui:changeme_secure_password@postgres:5432/openwebui"
+  WEBUI_SECRET_KEY: "changeme_random_secret_key"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openwebui
+  namespace: openwebui
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: openwebui
+  template:
+    metadata:
+      labels:
+        app: openwebui
+    spec:
+      containers:
+      - name: openwebui
+        image: ghcr.io/open-webui/open-webui:main
+        ports:
+        - containerPort: 8080
+          name: http
+        envFrom:
+        - configMapRef:
+            name: openwebui-config
+        - secretRef:
+            name: openwebui-secret
+        env:
+        - name: DATA_DIR
+          value: "/app/backend/data"
+        volumeMounts:
+        - name: data
+          mountPath: /app/backend/data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+      volumes:
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openwebui
+  namespace: openwebui
+spec:
+  selector:
+    app: openwebui
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: openwebui-hpa
+  namespace: openwebui
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: openwebui
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 4
+        periodSeconds: 30
+      selectPolicy: Max

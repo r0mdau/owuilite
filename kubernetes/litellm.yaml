@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: openwebui
+data:
+  config.yaml: |
+    model_list:
+      - model_name: gpt-4
+        litellm_params:
+          model: gpt-4
+          api_key: os.environ/OPENAI_API_KEY
+      
+      - model_name: gpt-3.5-turbo
+        litellm_params:
+          model: gpt-3.5-turbo
+          api_key: os.environ/OPENAI_API_KEY
+    
+    litellm_settings:
+      drop_params: true
+      set_verbose: false
+      request_timeout: 600
+      cache: true
+      cache_params:
+        type: redis
+        host: valkey
+        port: 6379
+    
+    general_settings:
+      master_key: os.environ/LITELLM_MASTER_KEY
+      database_url: os.environ/DATABASE_URL
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: litellm-secret
+  namespace: openwebui
+type: Opaque
+stringData:
+  OPENAI_API_KEY: "your_key_here"
+  ANTHROPIC_API_KEY: "your_key_here"
+  LITELLM_MASTER_KEY: "sk-1234"
+  DATABASE_URL: "postgresql://openwebui:changeme_secure_password@postgres:5432/openwebui"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: openwebui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+      - name: litellm
+        image: ghcr.io/berriai/litellm:main-latest
+        command: ["litellm"]
+        args:
+        - "--config"
+        - "/app/config.yaml"
+        - "--port"
+        - "4000"
+        - "--num_workers"
+        - "4"
+        ports:
+        - containerPort: 4000
+          name: http
+        envFrom:
+        - secretRef:
+            name: litellm-secret
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: litellm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: openwebui
+spec:
+  selector:
+    app: litellm
+  ports:
+  - port: 4000
+    targetPort: 4000
