@@ -1,0 +1,49 @@
+services:
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:v0.6.33-slim
+    ports:
+      - "3000:8080"
+    environment:
+        GLOBAL_LOG_LEVEL: INFO
+        OPENAI_API_BASE_URL: "http://litellm:4000"
+        OPENAI_API_KEY: "sk-1234"
+        RAG_OPENAI_API_BASE_URL: "http://litellm:4000"
+        RAG_OPENAI_API_KEY: "sk-1234"
+        RAG_EMBEDDING_ENGINE: "openai"
+        RAG_EMBEDDING_MODEL: "text-embedding-3-small"
+        IMAGES_OPENAI_API_BASE_URL: "http://litellm:4000"
+        IMAGES_OPENAI_API_KEY: "sk-1234"
+    volumes:
+      - ./.data:/app/backend/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://openwebui:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - netopenwebui
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-v1.77.2-stable
+    ports:
+      - "4000:4000"
+    environment:
+        LITELLM_MASTER_KEY: "sk-1234"
+    env_file:
+      - ./litellm.env
+    volumes:
+      - ./litellm-config.yml:/app/proxy_server_config.yml
+    command: ["--config", "/app/proxy_server_config.yml"]
+    healthcheck:
+      test: [ "CMD", "wget","-q", "--no-verbose", "--tries=1", "http://litellm:4000/health/liveliness"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - netopenwebui
+
+networks:
+  netopenwebui:
+    driver: bridge
