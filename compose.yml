@@ -5,6 +5,7 @@ services:
       - "3000:8080"
     environment:
         GLOBAL_LOG_LEVEL: INFO
+        DATABASE_URL: "postgresql://openwebui:password@db-openwebui:5432/openwebui"
         OPENAI_API_BASE_URL: "http://litellm:4000"
         OPENAI_API_KEY: "sk-1234"
         RAG_OPENAI_API_BASE_URL: "http://litellm:4000"
@@ -13,8 +14,29 @@ services:
         RAG_EMBEDDING_MODEL: "text-embedding-3-small"
         IMAGES_OPENAI_API_BASE_URL: "http://litellm:4000"
         IMAGES_OPENAI_API_KEY: "sk-1234"
+        REDIS_URL: "redis://valkey:6379/1"
+        ENABLE_WEBSOCKET_SUPPORT: "true"
+        WEBSOCKET_MANAGER: "redis"
+        WEBSOCKET_REDIS_URL: "redis://valkey:6379/0"
+        WEBUI_SECRET_KEY: "secret"
+        QDRANT_URI: http://qdrant:6333
+        VECTOR_DB: qdrant
+        QDRANT_API_KEY: sk-1234
+        ENABLE_QDRANT_MULTITENANCY_MODE: "true"
+        STORAGE_PROVIDER: s3
+        S3_ACCESS_KEY_ID: admin
+        S3_SECRET_ACCESS_KEY: password
+        S3_REGION_NAME:
+        S3_ENDPOINT_URL: http://minio:9000
+        S3_BUCKET_NAME: openwebui
+        ENABLE_FORWARD_USER_INFO_HEADERS: true
     volumes:
       - ./.data:/app/backend/data
+    depends_on:
+      db-openwebui:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://openwebui:8080/health"]
       interval: 30s
@@ -49,6 +71,25 @@ services:
     networks:
       - netopenwebui
 
+  db-openwebui:
+    image: postgres:16
+    command: ["postgres", "-c", "log_min_messages=DEBUG1"]
+    environment:
+      POSTGRES_DB: openwebui
+      POSTGRES_USER: openwebui
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db-openwebui-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d openwebui -U openwebui"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    networks:
+      - netopenwebui
+
   db-litellm:
     image: postgres:16
     command: ["postgres", "-c", "log_min_messages=DEBUG1"]
@@ -66,9 +107,84 @@ services:
     networks:
       - netopenwebui
 
+  valkey:
+    image: valkey/valkey:8.1.1
+    volumes:
+      - valkey-data:/data
+    command: "valkey-server --save 30 1"
+    healthcheck:
+      test: "[ $$(valkey-cli ping) = 'PONG' ]"
+      start_period: 5s
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+      - DAC_OVERRIDE
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
+    networks:
+      - netopenwebui
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.3
+    environment:
+        QDRANT__SERVICE__API_KEY: "sk-1234"
+        QDRANT__LOG_LEVEL: "DEBUG"
+    ports:
+      - "6334:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - netopenwebui
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /storage --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+        MINIO_ROOT_USER: admin
+        MINIO_ROOT_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - netopenwebui
+    volumes:
+      - minio-data:/storage
+
+  createbuckets:
+    image: quay.io/minio/mc:RELEASE.2025-03-12T17-29-24Z
+    depends_on:
+      - minio
+    restart: on-failure
+    networks:
+      - netopenwebui
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set dockerminio http://minio:9000 admin password;
+      /usr/bin/mc mb dockerminio/openwebui;
+      exit 0;
+      "
+
 networks:
   netopenwebui:
     driver: bridge
 
 volumes:
+  valkey-data:
+  qdrant-data:
   db-litellm-data:
+  db-openwebui-data:
+  minio-data:
