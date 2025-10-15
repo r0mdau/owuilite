@@ -20,7 +20,6 @@ Then it is proposed to use docker compose to launch the whole solution
 docker compose up
 ```
 
-
 ### Configure clis
 
 Set the environment variables to point to local LiteLLM
