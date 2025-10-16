@@ -1,0 +1,57 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'qdrant'
+          scheme: http
+          static_configs:
+            - targets: ['qdrant:6333']  # Use the service name from docker compose!
+          metrics_path: /metrics
+          # If you need an API Key, add headers:
+          authorization:
+            type: Bearer
+            credentials: ${QDRANT__SERVICE__API_KEY}
+        - job_name: 'litellm-exporter'
+          static_configs:
+            - targets: ['litellm-exporter:9090']
+        - job_name: 'db-openwebui'
+          static_configs:
+            - targets: ['db-openwebui-exporter:9187']
+        - job_name: 'db-litellm'
+          static_configs:
+            - targets: ['db-litellm-exporter:9187']
+        - job_name: 'openwebui-exporter'
+          static_configs:
+            - targets: ['openwebui-exporter:9090']
+exporters:
+  otlp:
+    endpoint: http://tempo:7134
+    tls:
+      insecure: true
+  prometheusremotewrite:
+    endpoint: http://prometheus:9090/api/v1/write
+
+connectors:
+  signaltometrics:
+    spans:
+      - name: span.count
+        description: Count of spans
+        sum:
+          value: Int(AdjustedCount()) # Count of total spans represented by each span
+
+processors:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: []
+      exporters: [otlp,signaltometrics]
+    metrics:
+      receivers: [signaltometrics, prometheus]
+      processors: []
+      exporters: [prometheusremotewrite]

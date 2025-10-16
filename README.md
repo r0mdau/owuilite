@@ -20,6 +20,12 @@ Then it is proposed to use docker compose to launch the whole solution
 docker compose up
 ```
 
+Alternative, start the poutine with observability suite
+
+```bash
+docker compose -f compose.yml -f otel.compose.yml up
+```
+
 ### Configure clis
 
 Set the environment variables to point to local LiteLLM
