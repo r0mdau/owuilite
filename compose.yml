@@ -118,6 +118,16 @@ services:
     networks:
       - netopenwebui
 
+  mcpo:
+    image: ghcr.io/open-webui/mcpo:main
+    command: ["--api-key", "sk-1234", "--config", "/etc/mcp/config.json"]
+    volumes:
+      - ./confs/mcp-config.json:/etc/mcp/config.json
+    ports:
+      - "5000:8000"
+    networks:
+      - netopenwebui
+
   db-openwebui:
     image: postgres:16
     command: ["postgres", "-c", "log_min_messages=DEBUG1"]
