@@ -1,0 +1,64 @@
+general_settings:
+  user_header_name: X-OpenWebUI-User-Email
+  proxy_batch_write_at: 60
+  database_connection_pool_limit: 10
+  disable_spend_logs: True
+  disable_error_logs: False
+  allow_requests_on_db_unavailable: True
+litellm_settings:
+  request_timeout: 600
+  set_verbose: True
+  json_logs: True
+  drop_params: true
+router_settings:
+  model_group_alias:
+    gemini-2.5-pro: "gpt-5-mini"
+model_list:
+- model_name: claude-opus-4-1-20250805
+  litellm_params:
+    model: bedrock/us.anthropic.claude-opus-4-1-20250805-v1:0
+    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+    aws_region_name: us-east-1
+- model_name: claude-sonnet-4-5-20250929
+  litellm_params:
+    model: bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0
+    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+    aws_region_name: us-east-1
+- model_name: claude-sonnet-4-20250514
+  litellm_params:
+    model: bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0
+    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+    aws_region_name: us-east-1
+- model_name: claude-3-5-haiku-20241022
+  litellm_params:
+    model: bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0
+    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
+    aws_region_name: us-east-1
+- model_name: gpt-5-codex
+  litellm_params:
+    model: azure/gpt-5-codex
+    base_model: azure/gpt-5-codex
+    api_base: os.environ/AZURE_OPENAI_API_ENDPOINT
+    api_key: os.environ/AZURE_OPENAI_API_KEY
+- model_name: gpt-5-mini
+  litellm_params:
+    model: azure/gpt-5-mini
+    base_model: azure/gpt-5-mini
+    api_base: os.environ/AZURE_OPENAI_API_ENDPOINT
+    api_key: os.environ/AZURE_OPENAI_API_KEY
+    api_version: 2024-12-01-preview
+- model_name: gpt-image-1
+  litellm_params:
+    model: azure/gpt-image-1
+    base_model: azure/gpt-image-1
+    api_base: os.environ/AZURE_WESTUS3_OPENAI_API_ENDPOINT
+    api_key: os.environ/AZURE_WESTUS3_OPENAI_API_KEY
+    api_version: 2025-04-01-preview
+    rpm: 60
+- model_name: text-embedding-3-small
+  litellm_params:
+    model: azure/text-embedding-3-small
+    base_model: azure/text-embedding-3-small
+    api_base: os.environ/AZURE_OPENAI_API_ENDPOINT
+    api_key: os.environ/AZURE_OPENAI_API_KEY
+    api_version: 2024-12-01-preview

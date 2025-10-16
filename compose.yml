@@ -102,9 +102,9 @@ services:
         DATABASE_URL: "postgresql://litellm:password@db-litellm:5432/litellm"
         STORE_MODEL_IN_DB: "True"
     env_file:
-      - ./litellm.env
+      - ./envs/litellm.env
     volumes:
-      - ./litellm-config.yml:/app/proxy_server_config.yml
+      - ./confs/litellm-config.yml:/app/proxy_server_config.yml
     command: ["--config", "/app/proxy_server_config.yml"]
     depends_on:
       db-litellm:
