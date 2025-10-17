@@ -11,7 +11,7 @@ Have docker and docker compose up and running.
 The fastest way to start using OpenWebUI chat application is to start it using docker
 
 ```bash
-docker run -p 3000:8080 --network=host -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:v0.6.33
+docker run --network=host -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:v0.6.33
 ```
 
 <details>
