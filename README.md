@@ -1,14 +1,25 @@
 # owuilite
 
-Getting started guide adopting [Open WebUI][#openwebui] and [LiteLLM][#litellm].
+A getting started guide for adopting [Open WebUI][#openwebui] and [LiteLLM][#litellm].
+
+## Overview
+
+This repository provides multiple deployment configurations for running Open WebUI with LiteLLM, ranging from a simple single-container setup to a production-ready, autoscaling architecture with full observability. The configurations demonstrate progressive complexity:
+
+- **Basic**: Single Open WebUI container for quick local testing
+- **Intermediate**: Open WebUI + LiteLLM proxy for accessing public/private LLM APIs
+- **Advanced**: Full autoscaling stack with PostgreSQL, Valkey, Qdrant, and MinIO
+- **Enterprise**: Complete solution with observability features using OpenTelemetry
 
 ## Pre-Requisites
 
 Have docker and docker compose up and running.
 
-## Getting started
+## Getting Started
 
-The fastest way to start using OpenWebUI chat application is to start it using docker
+### Basic Setup (Single Container)
+
+The fastest way to start using the Open WebUI chat application is to run it with Docker:
 
 ```bash
 docker run --network=host -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:v0.6.33
@@ -17,10 +28,22 @@ docker run --network=host -v open-webui:/app/backend/data --name open-webui ghcr
 <details>
 <summary>Click to expand the diagram...</summary>
 
-![simple openwebui](diagrams/simple-openwebui.png)
+![openwebui-ollama](diagrams/openwebui-ollama.png)
 </details>
 
-Then it is proposed to use docker compose to launch the whole solution
+### Intermediate Setup (Open WebUI + LiteLLM)
+
+An intermediate solution shows Open WebUI and LiteLLM running on the same host and exposing public/private LLMs APIs:
+
+<details>
+<summary>Click to expand the diagram...</summary>
+
+![openwebui-litellm](diagrams/openwebui-litellm.png)
+</details>
+
+### Advanced Setup (Full Autoscaling Stack)
+
+Next, use docker compose to launch the complete autoscaling system:
 
 ```bash
 docker compose up
@@ -37,23 +60,27 @@ Systems deployed to run the solution :
 |--------|-------------|
 | [Open WebUI][#openwebui]  | This is the main user interface. |
 | [LiteLLM][#litellm]       | This is the LLMs proxy for exposing Azure LLMs through an OpenAI API specification. |
-| [PostgreSQL][#postgresql] | SQL database used to store all configurations and persisted data for OpenWebUI and LiteLLM. |
-| [Valkey][#valkey]         | Valkey is a Redis alternative and is used to manage the Websockets for live interactivity with multiple running OpenWebUI instances and sharing some cached states. |
-| [Qdrant][#qdrant]         | Vector database used to store vectorized documents uploaded into OpenWebUI and for RAG. |
-| [MinIO][#minio]           | Object store used to store uploaded documents from OpenWebUI in a central place. |
-| [mcpo][#mcpo]             | NOT CONFIGURED YET. To run officially supported [MCP servers][#mcpserver] for Agentic workflows via MCP. |
+| [PostgreSQL][#postgresql] | SQL database used to store all configurations and persisted data for Open WebUI and LiteLLM. |
+| [Valkey][#valkey]         | Valkey is a Redis alternative and is used to manage the Websockets for live interactivity with multiple running Open WebUI instances and sharing some cached states. |
+| [Qdrant][#qdrant]         | Vector database used to store vectorized documents uploaded into Open WebUI and for RAG. |
+| [MinIO][#minio]           | Object store used to store uploaded documents from Open WebUI in a central place. |
+| [mcpo][#mcpo]             | To run officially supported [MCP servers][#mcpserver] for Agentic workflows via MCP. |
 
 </details>
 
-Alternative, start the poutine with observability suite
+### Enterprise Setup (with Observability)
+
+The final setup includes the autoscaling system combined with observability features for an enterprise-ready solution:
 
 ```bash
 docker compose -f compose.yml -f otel.compose.yml up
 ```
 
-### Configure clis
+## CLI Configuration
 
-Set the environment variables to point to local LiteLLM
+### Configure CLIs
+
+Set the environment variables to point to local LiteLLM:
 
 ```bash
 make claude
@@ -63,7 +90,9 @@ make codex
 source codex.env
 ```
 
-Configure Codex LiteLLM API endpoint
+### Configure Codex
+
+Configure Codex LiteLLM API endpoint:
 
 ```bash
 cat > ~/.codex/config.toml << 'EOF'
