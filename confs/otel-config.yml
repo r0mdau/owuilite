@@ -36,12 +36,6 @@ exporters:
     endpoint: http://prometheus:9090/api/v1/write
 
 connectors:
-  signaltometrics:
-    spans:
-      - name: span.count
-        description: Count of spans
-        sum:
-          value: Int(AdjustedCount()) # Count of total spans represented by each span
 
 processors:
 
@@ -50,8 +44,8 @@ service:
     traces:
       receivers: [otlp]
       processors: []
-      exporters: [otlp,signaltometrics]
+      exporters: [otlp]
     metrics:
-      receivers: [signaltometrics, prometheus]
+      receivers: [otlp, prometheus]
       processors: []
       exporters: [prometheusremotewrite]
