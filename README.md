@@ -43,7 +43,13 @@ An intermediate solution shows Open WebUI and LiteLLM running on the same host a
 
 ### Advanced Setup (Full Autoscaling Stack)
 
-Next, use docker compose to launch the complete autoscaling system:
+Next, create the LiteLLM environment file and fill in the values. Without it, compose fails with `env file ... not found`:
+
+```bash
+cp envs/litellm.env.example envs/litellm.env
+```
+
+Then use docker compose to launch the complete autoscaling system:
 
 ```bash
 docker compose up
@@ -84,10 +90,10 @@ Set the environment variables to point to local LiteLLM:
 
 ```bash
 make claude
-source claude.env
+source envs/claude.env
 
 make codex
-source codex.env
+source envs/codex.env
 ```
 
 ### Configure Codex
