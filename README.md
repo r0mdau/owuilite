@@ -119,6 +119,27 @@ wire_api = "responses"
 EOF
 ```
 
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every pull request and on pushes to `main`:
+
+- `docker compose config -q` for `compose.yml` alone and with `otel.compose.yml` (using `.env.example` as the `.env` file)
+- a check that `environment:` values in the compose files are not unquoted booleans (Compose v2 accepts them silently, Compose v1 rejects them)
+- `yamllint` over all YAML files, using the repo's `.yamllint` config
+- a JSON syntax check of `confs/mcp-config.json`
+- a `gitleaks` secret scan of the full git history
+
+To run the same checks locally:
+
+```bash
+cp -n .env.example .env
+docker compose config -q
+docker compose -f compose.yml -f otel.compose.yml config -q
+yamllint .
+jq empty confs/mcp-config.json
+gitleaks git --redact .
+```
+
 [#openwebui]: https://github.com/open-webui/open-webui
 [#litellm]: https://github.com/BerriAI/litellm
 [#postgresql]: https://www.postgresql.org/

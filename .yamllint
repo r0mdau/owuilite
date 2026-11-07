@@ -1,0 +1,31 @@
+---
+# yamllint config for CI.
+#
+# Syntax errors and duplicate keys are always fatal (key-duplicates stays at
+# the default "error" level). Purely cosmetic rules that the existing files do
+# not follow are relaxed so CI catches real breakage without forcing a
+# repo-wide reformat.
+extends: default
+
+ignore: |
+  .git/
+
+rules:
+  document-start: disable
+  new-line-at-end-of-file: disable
+  comments: disable
+  comments-indentation: disable
+  brackets: disable
+  colons: disable
+  indentation:
+    # compose files indent `environment:` maps by 4 and everything else by 2.
+    spaces: consistent
+    indent-sequences: whatever
+    level: warning
+  line-length:
+    max: 160
+    level: warning
+  truthy:
+    # LiteLLM config uses Python-style True/False; GitHub Actions uses `on:`.
+    allowed-values: ["true", "false", "True", "False"]
+    check-keys: false
