@@ -3,6 +3,7 @@ services:
   openwebui:
     environment:
         ENABLE_OTEL: "true"
+        ENABLE_OTEL_TRACES: "true"
         ENABLE_OTEL_METRICS: "true"
         OTEL_EXPORTER_OTLP_ENDPOINT: http://opentelemetry:4317
         OTEL_EXPORTER_OTLP_INSECURE: "true"
