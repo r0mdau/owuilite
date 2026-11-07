@@ -1,19 +1,29 @@
+x-openwebui-otel-env: &openwebui-otel-env
+  ENABLE_OTEL: "true"
+  ENABLE_OTEL_TRACES: "true"
+  ENABLE_OTEL_METRICS: "true"
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://opentelemetry:4317
+  OTEL_EXPORTER_OTLP_INSECURE: "true"
+  # Both instances report as one service; service.instance.id tells them apart.
+  OTEL_SERVICE_NAME: openwebui
+  # OTEL_TRACES_SAMPLER: parentbased_always_on
+  # OTEL_TRACES_SAMPLER: parentbased_traceidratio
+  # OTEL_TRACES_SAMPLER_ARG: 0.5
+
 services:
-  # override openwebui service
+  # override the openwebui services
   openwebui:
     environment:
-        ENABLE_OTEL: "true"
-        ENABLE_OTEL_TRACES: "true"
-        ENABLE_OTEL_METRICS: "true"
-        OTEL_EXPORTER_OTLP_ENDPOINT: http://opentelemetry:4317
-        OTEL_EXPORTER_OTLP_INSECURE: "true"
-        OTEL_SERVICE_NAME: openwebui
-      # OTEL_TRACES_SAMPLER: parentbased_always_on
-      # OTEL_TRACES_SAMPLER: parentbased_traceidratio
-      # OTEL_TRACES_SAMPLER_ARG: 0.5
+      <<: *openwebui-otel-env
+      OTEL_RESOURCE_ATTRIBUTES: service.instance.id=openwebui-1
+
+  openwebui-2:
+    environment:
+      <<: *openwebui-otel-env
+      OTEL_RESOURCE_ATTRIBUTES: service.instance.id=openwebui-2
 
   opentelemetry:
-    image: otel/opentelemetry-collector-contrib:0.123.0-amd64
+    image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
     volumes:
       - ./confs/otel-config.yml:/otel-config.yml
     command: ["--config", "/otel-config.yml"]
@@ -25,16 +35,16 @@ services:
       - netopenwebui
 
   tempo:
-    image: grafana/tempo:1.5.0
+    image: grafana/tempo:2.10.10@sha256:12b0820f13ffa10ce956b6e9acc3b03f3cffded99109be6cc09d106fe56e5d38
     command: [ "-config.file=/etc/tempo.yml" ]
     volumes:
       - ./confs/tempo-config.yml:/etc/tempo.yml
-      - tempo_data:/tmp/tempo
+      - tempo_data:/var/tempo
     networks:
       - netopenwebui
 
   litellm-exporter:
-    image: nicholascecere/exporter-litellm:1.1.1
+    image: nicholascecere/exporter-litellm:1.2.0@sha256:707a5186d4bda736dd88e9202da353f160c6cabf68b229db850bf6d0ab4e7c29
     depends_on:
       - db-litellm
     environment:
@@ -53,7 +63,7 @@ services:
       - netopenwebui
 
   db-openwebui-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.17.1
+    image: prometheuscommunity/postgres-exporter:v0.20.1@sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e
     environment:
       DATA_SOURCE_NAME: "postgresql://openwebui:${OPENWEBUI_DB_PASSWORD:-password}@db-openwebui:5432/openwebui?sslmode=disable"
     depends_on:
@@ -61,7 +71,7 @@ services:
     networks:
       - netopenwebui
   db-litellm-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.17.1
+    image: prometheuscommunity/postgres-exporter:v0.20.1@sha256:ac5ec343104fae0e2d84a27bb8d69b38430a11910c5382cad85d478d2bab713e
     environment:
       DATA_SOURCE_NAME: "postgresql://litellm:${LITELLM_DB_PASSWORD:-password}@db-litellm:5432/litellm?sslmode=disable"
     depends_on:
@@ -69,8 +79,8 @@ services:
     networks:
       - netopenwebui
 
-  openwebui-exporter :
-    image: nicholascecere/exporter-openwebui:1.3.2
+  openwebui-exporter:
+    image: nicholascecere/exporter-openwebui:1.3.2@sha256:cb899509d87986637ca34aafffa69b6ecf42d563f1d0af5c20699e31df657876
     depends_on:
       - db-openwebui
     environment:
@@ -89,12 +99,11 @@ services:
       - netopenwebui
 
   prometheus:
-    image: prom/prometheus:v3.16.0
+    image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06
     command:
       - --config.file=/etc/prometheus.yml
       - --web.enable-remote-write-receiver
       - --enable-feature=exemplar-storage
-      - --enable-feature=native-histograms
     volumes:
       - ./confs/prometheus.yml:/etc/prometheus.yml
     ports:
@@ -103,12 +112,11 @@ services:
       - netopenwebui
 
   grafana:
-    image: grafana/grafana:11.5.2
+    image: grafana/grafana:13.3.0@sha256:488984b716c0862639f91a698adbe2862677a5a07bad42da5f03f3030883b205
     environment:
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_FEATURE_TOGGLES_ENABLE=alertingSimplifiedRouting,alertingQueryAndExpressionsStepMode
     entrypoint:
       - sh
       - -euc

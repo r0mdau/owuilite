@@ -18,25 +18,20 @@ receivers:
         - job_name: 'openwebui-exporter'
           static_configs:
             - targets: ['openwebui-exporter:9090']
+
 exporters:
-  otlp:
-    endpoint: http://tempo:7134
+  otlp_grpc:
+    endpoint: tempo:4317
     tls:
       insecure: true
-  prometheusremotewrite:
+  prometheus_remote_write:
     endpoint: http://prometheus:9090/api/v1/write
-
-connectors:
-
-processors:
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: []
-      exporters: [otlp]
+      exporters: [otlp_grpc]
     metrics:
       receivers: [otlp, prometheus]
-      processors: []
-      exporters: [prometheusremotewrite]
+      exporters: [prometheus_remote_write]

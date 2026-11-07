@@ -122,7 +122,7 @@ services:
       - netopenwebui
 
   db-litellm:
-    image: postgres:16
+    image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
     command: ["postgres", "-c", "log_min_messages=DEBUG1"]
     environment:
       POSTGRES_DB: litellm
@@ -139,7 +139,7 @@ services:
       - netopenwebui
 
   valkey:
-    image: valkey/valkey:8.1.1
+    image: valkey/valkey:8.1.1@sha256:a19bebed6a91bd5e6e2106fef015f9602a3392deeb7c9ed47548378dcee3dfc2
     volumes:
       - valkey-data:/data
     command: "valkey-server --save 30 1"

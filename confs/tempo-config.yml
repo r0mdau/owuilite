@@ -1,24 +1,22 @@
-search_enabled: true
-metrics_generator_enabled: true
+# Tempo 2.x, single binary. Everything lives under /var/tempo, which the
+# image creates owned by the non-root tempo user (10001), so the named volume
+# mounted there inherits that ownership.
+stream_over_http_enabled: true
 
 server:
   http_listen_port: 3200
+  log_level: info
 
 distributor:
-  receivers:                           # this configuration will listen on all ports and protocols that tempo is capable of.
-    jaeger:                            # the receives all come from the OpenTelemetry collector.  more configuration information can
-      protocols:                       # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
-        thrift_http:                   #
-        grpc:                          # for a production deployment you should only enable the receivers you need!
-        thrift_binary:
-        thrift_compact:
-    zipkin:
+  receivers:
+    # The OpenTelemetry collector is the only sender. Since Tempo 2.7 the
+    # receivers bind to localhost by default, so listen on all interfaces.
     otlp:
       protocols:
-        http:
         grpc:
-          endpoint: "tempo:7134"
-    opencensus:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
 
 ingester:
   trace_idle_period: 10s               # the length of time after a trace has not received spans to consider it complete and flush it
@@ -38,26 +36,23 @@ metrics_generator:
       source: tempo
       cluster: docker-compose
   storage:
-    path: /tmp/tempo/generator/wal
+    path: /var/tempo/generator/wal
     remote_write:
       - url: http://prometheus:9090/api/v1/write
         send_exemplars: true
+  traces_storage:
+    path: /var/tempo/generator/traces
 
 storage:
   trace:
-    backend: local                     # backend configuration to use
-    block:
-      bloom_filter_false_positive: .05 # bloom filter false positive rate.  lower values create larger filters but fewer false positives
-      index_downsample_bytes: 1000     # number of bytes per index record
-      encoding: zstd                   # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
+    backend: local
     wal:
-      path: /tmp/tempo/wal             # where to store the the wal locally
-      encoding: snappy                 # wal encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
+      path: /var/tempo/wal
     local:
-      path: /tmp/tempo/blocks
-    pool:
-      max_workers: 100                 # worker pool determines the number of parallel requests to the object store backend
-      queue_depth: 10000
+      path: /var/tempo/blocks
 
 overrides:
-  metrics_generator_processors: [service-graphs, span-metrics]
+  defaults:
+    metrics_generator:
+      # local-blocks backs TraceQL metrics queries in Grafana.
+      processors: [service-graphs, span-metrics, local-blocks]
