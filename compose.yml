@@ -1,6 +1,6 @@
 services:
   openwebui:
-    image: ghcr.io/open-webui/open-webui:v0.6.34-slim
+    image: ghcr.io/open-webui/open-webui:v0.13.0-slim
     ports:
       - "3000:8080"
     environment:
@@ -47,7 +47,7 @@ services:
       - netopenwebui
 
   openwebui-2:
-    image: ghcr.io/open-webui/open-webui:v0.6.34-slim
+    image: ghcr.io/open-webui/open-webui:v0.13.0-slim
     ports:
       - "3001:8080"
     environment:
@@ -94,7 +94,7 @@ services:
       - netopenwebui
 
   litellm:
-    image: ghcr.io/berriai/litellm:main-v1.77.2-stable
+    image: ghcr.io/berriai/litellm:v1.108.2@sha256:d8b4ac356743d647a13bb93f45b941fcd5f5354122cfd205948a1b192790389d
     ports:
       - "4000:4000"
     environment:
