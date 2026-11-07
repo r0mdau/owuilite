@@ -57,7 +57,7 @@ services:
   db-openwebui-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.1
     environment:
-      DATA_SOURCE_NAME: "postgresql://openwebui:password@db-openwebui:5432/openwebui"
+      DATA_SOURCE_NAME: "postgresql://openwebui:password@db-openwebui:5432/openwebui?sslmode=disable"
     depends_on:
       - db-openwebui
     networks:
@@ -65,7 +65,7 @@ services:
   db-litellm-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.1
     environment:
-      DATA_SOURCE_NAME: "postgresql://litellm:password@db-litellm:5432/litellm"
+      DATA_SOURCE_NAME: "postgresql://litellm:password@db-litellm:5432/litellm?sslmode=disable"
     depends_on:
       - db-litellm
     networks:
