@@ -42,7 +42,7 @@ services:
       - LITELLM_DB_PORT=5432
       - LITELLM_DB_NAME=litellm
       - LITELLM_DB_USER=litellm
-      - LITELLM_DB_PASSWORD=password
+      - LITELLM_DB_PASSWORD=${LITELLM_DB_PASSWORD:-password}
       - DB_MIN_CONNECTIONS=1
       - DB_MAX_CONNECTIONS=10
       - METRICS_UPDATE_INTERVAL=15
@@ -55,7 +55,7 @@ services:
   db-openwebui-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.1
     environment:
-      DATA_SOURCE_NAME: "postgresql://openwebui:password@db-openwebui:5432/openwebui?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://openwebui:${OPENWEBUI_DB_PASSWORD:-password}@db-openwebui:5432/openwebui?sslmode=disable"
     depends_on:
       - db-openwebui
     networks:
@@ -63,7 +63,7 @@ services:
   db-litellm-exporter:
     image: prometheuscommunity/postgres-exporter:v0.17.1
     environment:
-      DATA_SOURCE_NAME: "postgresql://litellm:password@db-litellm:5432/litellm?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://litellm:${LITELLM_DB_PASSWORD:-password}@db-litellm:5432/litellm?sslmode=disable"
     depends_on:
       - db-litellm
     networks:
@@ -78,7 +78,7 @@ services:
       - OPENWEBUI_DB_PORT=5432
       - OPENWEBUI_DB_NAME=openwebui
       - OPENWEBUI_DB_USER=openwebui
-      - OPENWEBUI_DB_PASSWORD=password
+      - OPENWEBUI_DB_PASSWORD=${OPENWEBUI_DB_PASSWORD:-password}
       - DB_MIN_CONNECTIONS=1
       - DB_MAX_CONNECTIONS=10
       - METRICS_UPDATE_INTERVAL=15
