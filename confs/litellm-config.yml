@@ -14,26 +14,18 @@ router_settings:
   model_group_alias:
     gemini-2.5-pro: "gpt-5-mini"
 model_list:
-- model_name: claude-opus-4-1-20250805
+- model_name: claude-opus-5-5
   litellm_params:
-    model: bedrock/us.anthropic.claude-opus-4-1-20250805-v1:0
-    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
-    aws_region_name: us-east-1
-- model_name: claude-sonnet-4-5-20250929
+    model: anthropic/claude-opus-5-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+- model_name: claude-sonnet-5-5
   litellm_params:
-    model: bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0
-    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
-    aws_region_name: us-east-1
-- model_name: claude-sonnet-4-20250514
+    model: anthropic/claude-sonnet-5-5
+    api_key: os.environ/ANTHROPIC_API_KEY
+- model_name: claude-haiku-5-5
   litellm_params:
-    model: bedrock/us.anthropic.claude-sonnet-4-20250514-v1:0
-    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
-    aws_region_name: us-east-1
-- model_name: claude-3-5-haiku-20241022
-  litellm_params:
-    model: bedrock/us.anthropic.claude-3-5-haiku-20241022-v1:0
-    api_key: os.environ/AWS_BEARER_TOKEN_BEDROCK
-    aws_region_name: us-east-1
+    model: anthropic/claude-haiku-5-5
+    api_key: os.environ/ANTHROPIC_API_KEY
 - model_name: gpt-5-codex
   litellm_params:
     model: azure/gpt-5-codex
