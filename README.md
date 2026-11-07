@@ -8,7 +8,7 @@ This repository provides multiple deployment configurations for running Open Web
 
 - **Basic**: Single Open WebUI container for quick local testing
 - **Intermediate**: Open WebUI + LiteLLM proxy for accessing public/private LLM APIs
-- **Advanced**: Full autoscaling stack with PostgreSQL, Valkey, Qdrant, and MinIO
+- **Advanced**: Full autoscaling stack with PostgreSQL, pgvector, Valkey, and MinIO
 - **Enterprise**: Complete solution with observability features using OpenTelemetry
 
 ## Pre-Requisites
@@ -68,7 +68,7 @@ Systems deployed to run the solution :
 | [LiteLLM][#litellm]       | This is the LLMs proxy for exposing Azure LLMs through an OpenAI API specification. |
 | [PostgreSQL][#postgresql] | SQL database used to store all configurations and persisted data for Open WebUI and LiteLLM. |
 | [Valkey][#valkey]         | Valkey is a Redis alternative and is used to manage the Websockets for live interactivity with multiple running Open WebUI instances and sharing some cached states. |
-| [Qdrant][#qdrant]         | Vector database used to store vectorized documents uploaded into Open WebUI and for RAG. |
+| [pgvector][#pgvector]     | PostgreSQL extension used to store vectorized documents uploaded into Open WebUI and for RAG. |
 | [MinIO][#minio]           | Object store used to store uploaded documents from Open WebUI in a central place. |
 | [mcpo][#mcpo]             | To run officially supported [MCP servers][#mcpserver] for Agentic workflows via MCP. |
 
@@ -118,7 +118,7 @@ EOF
 [#litellm]: https://github.com/BerriAI/litellm
 [#postgresql]: https://www.postgresql.org/
 [#valkey]: https://github.com/valkey-io/valkey
-[#qdrant]: https://github.com/qdrant/qdrant
+[#pgvector]: https://github.com/pgvector/pgvector
 [#minio]: https://github.com/minio/minio
 [#mcpo]: https://github.com/open-webui/mcpo
 [#mcpserver]: https://github.com/modelcontextprotocol/servers

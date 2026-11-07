@@ -13,13 +13,10 @@ services:
 
   opentelemetry:
     image: otel/opentelemetry-collector-contrib:0.123.0-amd64
-    environment:
-        QDRANT__SERVICE__API_KEY: "sk-1234"
     volumes:
       - ./confs/otel-config.yml:/otel-config.yml
     command: ["--config", "/otel-config.yml"]
     depends_on:
-      - qdrant
       - db-openwebui-exporter
       - db-litellm-exporter
       - openwebui-exporter
