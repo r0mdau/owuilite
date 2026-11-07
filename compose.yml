@@ -1,95 +1,65 @@
+x-openwebui: &openwebui
+  image: ghcr.io/open-webui/open-webui:v0.13.0-slim
+  environment:
+      GLOBAL_LOG_LEVEL: INFO
+      DATABASE_URL: "postgresql://openwebui:password@db-openwebui:5432/openwebui"
+      OPENAI_API_BASE_URL: "http://litellm:4000"
+      OPENAI_API_KEY: "sk-1234"
+      RAG_OPENAI_API_BASE_URL: "http://litellm:4000"
+      RAG_OPENAI_API_KEY: "sk-1234"
+      RAG_EMBEDDING_ENGINE: "openai"
+      RAG_EMBEDDING_MODEL: "text-embedding-3-small"
+      IMAGES_OPENAI_API_BASE_URL: "http://litellm:4000"
+      IMAGES_OPENAI_API_KEY: "sk-1234"
+      REDIS_URL: "redis://valkey:6379/1"
+      ENABLE_WEBSOCKET_SUPPORT: "true"
+      WEBSOCKET_MANAGER: "redis"
+      WEBSOCKET_REDIS_URL: "redis://valkey:6379/0"
+      WEBUI_SECRET_KEY: "secret"
+      VECTOR_DB: pgvector
+      STORAGE_PROVIDER: s3
+      S3_ACCESS_KEY_ID: admin
+      S3_SECRET_ACCESS_KEY: password
+      S3_REGION_NAME:
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_NAME: openwebui
+      ENABLE_FORWARD_USER_INFO_HEADERS: "true"
+  # Anchored on its own because `<<` merges shallowly: a service that sets
+  # depends_on replaces this map unless it merges it back in explicitly.
+  depends_on: &openwebui-depends-on
+    db-openwebui:
+      condition: service_healthy
+    valkey:
+      condition: service_healthy
+  healthcheck:
+    test: [ "CMD", "curl", "-f", "http://localhost:8080/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+  networks:
+    - netopenwebui
+
 services:
   openwebui:
-    image: ghcr.io/open-webui/open-webui:v0.13.0-slim
+    <<: *openwebui
     ports:
       - "3000:8080"
-    environment:
-        GLOBAL_LOG_LEVEL: INFO
-        DATABASE_URL: "postgresql://openwebui:password@db-openwebui:5432/openwebui"
-        OPENAI_API_BASE_URL: "http://litellm:4000"
-        OPENAI_API_KEY: "sk-1234"
-        RAG_OPENAI_API_BASE_URL: "http://litellm:4000"
-        RAG_OPENAI_API_KEY: "sk-1234"
-        RAG_EMBEDDING_ENGINE: "openai"
-        RAG_EMBEDDING_MODEL: "text-embedding-3-small"
-        IMAGES_OPENAI_API_BASE_URL: "http://litellm:4000"
-        IMAGES_OPENAI_API_KEY: "sk-1234"
-        REDIS_URL: "redis://valkey:6379/1"
-        ENABLE_WEBSOCKET_SUPPORT: "true"
-        WEBSOCKET_MANAGER: "redis"
-        WEBSOCKET_REDIS_URL: "redis://valkey:6379/0"
-        WEBUI_SECRET_KEY: "secret"
-        VECTOR_DB: pgvector
-        STORAGE_PROVIDER: s3
-        S3_ACCESS_KEY_ID: admin
-        S3_SECRET_ACCESS_KEY: password
-        S3_REGION_NAME:
-        S3_ENDPOINT_URL: http://minio:9000
-        S3_BUCKET_NAME: openwebui
-        ENABLE_FORWARD_USER_INFO_HEADERS: true
     volumes:
       - ./.data:/app/backend/data
-    depends_on:
-      db-openwebui:
-        condition: service_healthy
-      valkey:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - netopenwebui
 
   openwebui-2:
-    image: ghcr.io/open-webui/open-webui:v0.13.0-slim
+    <<: *openwebui
     ports:
       - "3001:8080"
-    environment:
-        GLOBAL_LOG_LEVEL: INFO
-        DATABASE_URL: "postgresql://openwebui:password@db-openwebui:5432/openwebui"
-        OPENAI_API_BASE_URL: "http://litellm:4000"
-        OPENAI_API_KEY: "sk-1234"
-        RAG_OPENAI_API_BASE_URL: "http://litellm:4000"
-        RAG_OPENAI_API_KEY: "sk-1234"
-        RAG_EMBEDDING_ENGINE: "openai"
-        RAG_EMBEDDING_MODEL: "text-embedding-3-small"
-        IMAGES_OPENAI_API_BASE_URL: "http://litellm:4000"
-        IMAGES_OPENAI_API_KEY: "sk-1234"
-        REDIS_URL: "redis://valkey:6379/1"
-        ENABLE_WEBSOCKET_SUPPORT: "true"
-        WEBSOCKET_MANAGER: "redis"
-        WEBSOCKET_REDIS_URL: "redis://valkey:6379/0"
-        WEBUI_SECRET_KEY: "secret"
-        VECTOR_DB: pgvector
-        STORAGE_PROVIDER: s3
-        S3_ACCESS_KEY_ID: admin
-        S3_SECRET_ACCESS_KEY: password
-        S3_REGION_NAME:
-        S3_ENDPOINT_URL: http://minio:9000
-        S3_BUCKET_NAME: openwebui
-        ENABLE_FORWARD_USER_INFO_HEADERS: true
     volumes:
       - openwebui-2-data:/app/backend/data
     depends_on:
-      db-openwebui:
-        condition: service_healthy
-      valkey:
-        condition: service_healthy
+      <<: *openwebui-depends-on
       # Both instances run DB migrations on start. Starting them together
       # races, and the loser exits, so let the first one finish.
       openwebui:
         condition: service_healthy
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    networks:
-      - netopenwebui
 
   litellm:
     image: ghcr.io/berriai/litellm:v1.108.2@sha256:d8b4ac356743d647a13bb93f45b941fcd5f5354122cfd205948a1b192790389d
