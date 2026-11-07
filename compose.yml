@@ -202,8 +202,10 @@ services:
       - netopenwebui
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
-    command: server /storage --console-address ":9001"
+    # The MinIO project's own images are gone from Docker Hub and quay.io.
+    image: cgr.dev/chainguard/minio@sha256:869ca3178831d9f521ea02258a0f0d4fbc1e9f84302e707514e1f861b860865d
+    # Runs as UID 65532, which can only write to a volume mounted on /data.
+    command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -218,22 +220,20 @@ services:
     networks:
       - netopenwebui
     volumes:
-      - minio-data:/storage
+      - minio-data:/data
 
   createbuckets:
-    image: quay.io/minio/mc:RELEASE.2025-03-12T17-29-24Z
+    # This image has no shell, so mc takes its alias from MC_HOST_<alias>.
+    image: cgr.dev/chainguard/minio-client@sha256:7e80e77f8c949810d0eaead1120e28c63f913ff96ae7f78a8e4cd3c1e2f0623f
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     restart: on-failure
+    environment:
+      MC_HOST_dockerminio: http://admin:password@minio:9000
+    command: ["mb", "--ignore-existing", "dockerminio/openwebui"]
     networks:
       - netopenwebui
-    entrypoint: >
-      /bin/sh -c "
-      sleep 5;
-      /usr/bin/mc alias set dockerminio http://minio:9000 admin password;
-      /usr/bin/mc mb dockerminio/openwebui;
-      exit 0;
-      "
 
 networks:
   netopenwebui:
