@@ -78,6 +78,10 @@ services:
         condition: service_healthy
       valkey:
         condition: service_healthy
+      # Both instances run DB migrations on start. Starting them together
+      # races, and the loser exits, so let the first one finish.
+      openwebui:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
