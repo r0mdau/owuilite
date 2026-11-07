@@ -43,11 +43,16 @@ An intermediate solution shows Open WebUI and LiteLLM running on the same host a
 
 ### Advanced Setup (Full Autoscaling Stack)
 
-Next, create the LiteLLM environment file and fill in the values. Without it, compose fails with `env file ... not found`:
+All credentials live in a single `.env` file at the repository root, which Docker Compose reads automatically. Create it from the example and fill in your LLM provider keys (Anthropic, Azure OpenAI):
 
 ```bash
-cp envs/litellm.env.example envs/litellm.env
+cp .env.example .env
 ```
+
+The file is optional: without it, compose falls back to the same demo defaults, so `docker compose up` works with zero setup (models only answer once their provider keys are set). Variables exported in your shell take precedence over `.env`.
+
+> [!WARNING]
+> The default credentials (`sk-1234` LiteLLM master key, `password` database and MinIO passwords, `secret` session key, ...) are publicly known and meant for **local demos only**. Set your own values in `.env` before exposing the stack to any network you do not fully trust, and never commit `.env` (it is gitignored).
 
 Then use docker compose to launch the complete autoscaling system:
 
@@ -86,7 +91,7 @@ docker compose -f compose.yml -f otel.compose.yml up
 
 ### Configure CLIs
 
-Set the environment variables to point to local LiteLLM:
+Set the environment variables to point to local LiteLLM. The targets use `LITELLM_MASTER_KEY` from your shell or `.env`, falling back to the demo default `sk-1234`:
 
 ```bash
 make claude

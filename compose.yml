@@ -2,24 +2,24 @@ x-openwebui: &openwebui
   image: ghcr.io/open-webui/open-webui:v0.13.0-slim
   environment:
       GLOBAL_LOG_LEVEL: INFO
-      DATABASE_URL: "postgresql://openwebui:password@db-openwebui:5432/openwebui"
+      DATABASE_URL: "postgresql://openwebui:${OPENWEBUI_DB_PASSWORD:-password}@db-openwebui:5432/openwebui"
       OPENAI_API_BASE_URL: "http://litellm:4000"
-      OPENAI_API_KEY: "sk-1234"
+      OPENAI_API_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
       RAG_OPENAI_API_BASE_URL: "http://litellm:4000"
-      RAG_OPENAI_API_KEY: "sk-1234"
+      RAG_OPENAI_API_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
       RAG_EMBEDDING_ENGINE: "openai"
       RAG_EMBEDDING_MODEL: "text-embedding-3-small"
       IMAGES_OPENAI_API_BASE_URL: "http://litellm:4000"
-      IMAGES_OPENAI_API_KEY: "sk-1234"
+      IMAGES_OPENAI_API_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
       REDIS_URL: "redis://valkey:6379/1"
       ENABLE_WEBSOCKET_SUPPORT: "true"
       WEBSOCKET_MANAGER: "redis"
       WEBSOCKET_REDIS_URL: "redis://valkey:6379/0"
-      WEBUI_SECRET_KEY: "secret"
+      WEBUI_SECRET_KEY: "${WEBUI_SECRET_KEY:-secret}"
       VECTOR_DB: pgvector
       STORAGE_PROVIDER: s3
-      S3_ACCESS_KEY_ID: admin
-      S3_SECRET_ACCESS_KEY: password
+      S3_ACCESS_KEY_ID: "${MINIO_ROOT_USER:-admin}"
+      S3_SECRET_ACCESS_KEY: "${MINIO_ROOT_PASSWORD:-password}"
       S3_REGION_NAME:
       S3_ENDPOINT_URL: http://minio:9000
       S3_BUCKET_NAME: openwebui
@@ -66,13 +66,17 @@ services:
     ports:
       - "4000:4000"
     environment:
-        # Known default key for local demos: replace it for any real or exposed deployment.
-        LITELLM_MASTER_KEY: "sk-1234"
+        # Known default key for local demos: set your own in .env for any real or exposed deployment.
+        LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY:-sk-1234}"
         LITELLM_DANGEROUSLY_PERMIT_WEAK_OR_UNSET_MASTER_KEY: "true"
-        DATABASE_URL: "postgresql://litellm:password@db-litellm:5432/litellm"
+        DATABASE_URL: "postgresql://litellm:${LITELLM_DB_PASSWORD:-password}@db-litellm:5432/litellm"
         STORE_MODEL_IN_DB: "True"
-    env_file:
-      - ./envs/litellm.env
+        # LLM provider credentials, read by confs/litellm-config.yml (os.environ/...).
+        ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+        AZURE_OPENAI_API_ENDPOINT: "${AZURE_OPENAI_API_ENDPOINT:-}"
+        AZURE_OPENAI_API_KEY: "${AZURE_OPENAI_API_KEY:-}"
+        AZURE_WESTUS3_OPENAI_API_ENDPOINT: "${AZURE_WESTUS3_OPENAI_API_ENDPOINT:-}"
+        AZURE_WESTUS3_OPENAI_API_KEY: "${AZURE_WESTUS3_OPENAI_API_KEY:-}"
     volumes:
       - ./confs/litellm-config.yml:/app/proxy_server_config.yml
     command: ["--config", "/app/proxy_server_config.yml"]
@@ -90,7 +94,7 @@ services:
 
   mcpo:
     image: ghcr.io/open-webui/mcpo:git-788ff92@sha256:1e82c9555c19e50b80745705f32b47a2647589f35279527b5118ecd3a71bd467
-    command: ["--api-key", "sk-1234", "--config", "/etc/mcp/config.json"]
+    command: ["--api-key", "${LITELLM_MASTER_KEY:-sk-1234}", "--config", "/etc/mcp/config.json"]
     volumes:
       - ./confs/mcp-config.json:/etc/mcp/config.json
     ports:
@@ -104,7 +108,7 @@ services:
     environment:
       POSTGRES_DB: openwebui
       POSTGRES_USER: openwebui
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: "${OPENWEBUI_DB_PASSWORD:-password}"
     volumes:
       - db-openwebui-data:/var/lib/postgresql/data
     healthcheck:
@@ -123,7 +127,7 @@ services:
     environment:
       POSTGRES_DB: litellm
       POSTGRES_USER: litellm
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: "${LITELLM_DB_PASSWORD:-password}"
     volumes:
       - db-litellm-data:/var/lib/postgresql/data
     healthcheck:
@@ -168,8 +172,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-        MINIO_ROOT_USER: admin
-        MINIO_ROOT_PASSWORD: password
+        MINIO_ROOT_USER: "${MINIO_ROOT_USER:-admin}"
+        MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-password}"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s
@@ -188,7 +192,7 @@ services:
         condition: service_healthy
     restart: on-failure
     environment:
-      MC_HOST_dockerminio: http://admin:password@minio:9000
+      MC_HOST_dockerminio: "http://${MINIO_ROOT_USER:-admin}:${MINIO_ROOT_PASSWORD:-password}@minio:9000"
     command: ["mb", "--ignore-existing", "dockerminio/openwebui"]
     networks:
       - netopenwebui
