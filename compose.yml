@@ -98,7 +98,9 @@ services:
     ports:
       - "4000:4000"
     environment:
+        # Known default key for local demos: replace it for any real or exposed deployment.
         LITELLM_MASTER_KEY: "sk-1234"
+        LITELLM_DANGEROUSLY_PERMIT_WEAK_OR_UNSET_MASTER_KEY: "true"
         DATABASE_URL: "postgresql://litellm:password@db-litellm:5432/litellm"
         STORE_MODEL_IN_DB: "True"
     env_file:
