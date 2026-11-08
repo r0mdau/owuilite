@@ -38,23 +38,16 @@ jobs:
       # Compose v2+ silently coerces unquoted booleans in `environment:` maps
       # to strings, but Compose v1 and the strict schema reject them, so
       # `docker compose config` alone does not catch them.
-      - name: Install yq
-        env:
-          YQ_VERSION: 4.54.1
-          YQ_SHA256: 8e34fc298390875de416e6a4afcb8cabeceb25d9aa8506c1a2f9353cf702ea5f
-        run: |
-          curl -fsSLo "$RUNNER_TEMP/yq" \
-            "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_linux_amd64"
-          echo "${YQ_SHA256}  $RUNNER_TEMP/yq" | sha256sum -c -
-          chmod +x "$RUNNER_TEMP/yq"
-          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
-
       - name: No unquoted booleans in compose environment maps
+        env:
+          # renovate: datasource=docker
+          YQ_IMAGE: mikefarah/yq:4.54.1@sha256:4b3d9475d65571d28cbb19544d3820ec2945e4c8b2f18279394282b8dc3a592e
         run: |
           query='.services[]?.environment | select(tag == "!!map") | .[]
             | select(tag == "!!bool")
             | filename + ":" + (line | tostring) + ":" + key + ": " + to_string'
-          found=$(yq -N "$query" compose.yml otel.compose.yml)
+          found=$(docker run --rm -v "$PWD:/workdir" "$YQ_IMAGE" \
+            -N "$query" compose.yml otel.compose.yml)
           if [ -n "$found" ]; then
             while IFS=: read -r file line rest; do
               echo "::error file=${file},line=${line}::Quote this environment value: ${rest}"
@@ -63,7 +56,10 @@ jobs:
           fi
 
       - name: Install yamllint
-        run: pipx install yamllint==1.38.0
+        env:
+          # renovate: datasource=pypi depName=yamllint
+          YAMLLINT_VERSION: 1.38.0
+        run: pipx install "yamllint==${YAMLLINT_VERSION}"
 
       - name: yamllint
         run: yamllint --format github .
@@ -76,8 +72,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
-      GITLEAKS_VERSION: 8.30.1
-      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+      # renovate: datasource=docker
+      GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
     steps:
       - name: Checkout (full history)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -85,14 +81,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install gitleaks
-        run: |
-          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          curl -fsSLo "$RUNNER_TEMP/$tarball" \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${tarball}"
-          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$tarball" | sha256sum -c -
-          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
-          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
-
       - name: gitleaks (full history)
-        run: gitleaks git --redact --verbose --exit-code 1 .
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo "$GITLEAKS_IMAGE" \
+            git --redact --verbose --exit-code 1 /repo

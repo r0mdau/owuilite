@@ -140,6 +140,10 @@ jq empty confs/mcp-config.json
 gitleaks git --redact .
 ```
 
+### Dependency updates
+
+[Renovate](https://docs.renovatebot.com/) (`renovate.json`) keeps every pinned dependency current: the compose images (tag + digest), the GitHub Actions SHAs, the yq and gitleaks images and the yamllint version used by CI, and the Open WebUI tag in the single-container example above. It opens PRs on Monday mornings, and CI checks each one. Major updates wait for approval in the Dependency Dashboard issue, and Postgres major upgrades are never proposed, since they need a dump and restore of the data volume.
+
 [#openwebui]: https://github.com/open-webui/open-webui
 [#litellm]: https://github.com/BerriAI/litellm
 [#postgresql]: https://www.postgresql.org/

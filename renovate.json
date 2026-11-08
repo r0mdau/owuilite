@@ -1,0 +1,105 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    ":semanticCommitsDisabled"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "timezone": "Europe/Paris",
+  "prConcurrentLimit": 10,
+  "major": {
+    "dependencyDashboardApproval": true
+  },
+  "docker-compose": {
+    "managerFilePatterns": [
+      "/(^|/)[^/]*compose[^/]*\\.ya?ml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Images and packages pinned in workflow env vars behind a `# renovate:` comment",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=docker\\s+\\w+: (?<depName>[^\\s:@]+):(?<currentValue>[^\\s@]+)@(?<currentDigest>sha256:[a-f0-9]{64})",
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+\\w+: (?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "{{#if datasource}}{{{datasource}}}{{else}}docker{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Open WebUI version in the README's single-container example",
+      "managerFilePatterns": [
+        "/^README\\.md$/"
+      ],
+      "matchStrings": [
+        "(?<depName>ghcr\\.io/open-webui/open-webui):(?<currentValue>v[0-9][^\\s`]*)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Keep Open WebUI in compose and the README on the same release",
+      "matchPackageNames": [
+        "ghcr.io/open-webui/open-webui"
+      ],
+      "groupName": "Open WebUI"
+    },
+    {
+      "description": "The README shows a plain tag users copy, so don't add a digest there",
+      "matchFileNames": [
+        "README.md"
+      ],
+      "pinDigests": false
+    },
+    {
+      "description": "A Postgres major upgrade needs a dump and restore of the data volume, so never propose one",
+      "matchPackageNames": [
+        "postgres",
+        "pgvector/pgvector"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "pgvector tags carry the Postgres major (e.g. 0.8.7-pg16-trixie): stay on pg16",
+      "matchPackageNames": [
+        "pgvector/pgvector"
+      ],
+      "allowedVersions": "/-pg16-/"
+    },
+    {
+      "description": "Group the observability override's images",
+      "matchFileNames": [
+        "otel.compose.yml"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin",
+        "pinDigest"
+      ],
+      "groupName": "observability stack"
+    },
+    {
+      "description": "Group GitHub Actions updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions"
+    }
+  ]
+}
