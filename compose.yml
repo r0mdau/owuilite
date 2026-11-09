@@ -1,5 +1,5 @@
 x-openwebui: &openwebui
-  image: ghcr.io/open-webui/open-webui:v0.13.0-slim@sha256:283efb20756785229a388bcd1e56a052f5284ae8c861717eed5eaaa3bba6b20a
+  image: ghcr.io/open-webui/open-webui:v0.13.3-slim@sha256:8faf917243afee55e042b10ddc08ed6ae6fa9c62522c7e14d81e7cf2922325ae
   environment:
       GLOBAL_LOG_LEVEL: INFO
       DATABASE_URL: "postgresql://openwebui:${OPENWEBUI_DB_PASSWORD:-password}@db-openwebui:5432/openwebui"
