@@ -165,7 +165,7 @@ services:
 
   minio:
     # The MinIO project's own images are gone from Docker Hub and quay.io.
-    image: cgr.dev/chainguard/minio:latest@sha256:a1ac4589a5f8136b616e667b48a0bea9719bb10bd45799ea946f24bbedfafde4
+    image: cgr.dev/chainguard/minio:latest@sha256:e9cf6b99c226e9539ed0f14b6f00e37b07da153c7ba1f4f8709c807574b471ec
     # Runs as UID 65532, which can only write to a volume mounted on /data.
     command: server /data --console-address ":9001"
     ports:
