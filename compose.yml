@@ -186,7 +186,7 @@ services:
 
   createbuckets:
     # This image has no shell, so mc takes its alias from MC_HOST_<alias>.
-    image: cgr.dev/chainguard/minio-client:latest@sha256:10388d580a724f356b94c9b2631b5a179039cabe8c76e9b37d86ed007d569b05
+    image: cgr.dev/chainguard/minio-client:latest@sha256:94433f625c8057d18c69675dbaa33da6e4864f084f9c44faf30d3eb8e3754e0b
     depends_on:
       minio:
         condition: service_healthy
