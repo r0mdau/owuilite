@@ -103,7 +103,7 @@ services:
       - netopenwebui
 
   db-openwebui:
-    image: pgvector/pgvector:0.8.7-pg16-trixie@sha256:9cf8b511f0e9a2c209b61430fc139f1ab9c75edbb31fb1751db6617b246a897a
+    image: pgvector/pgvector:0.8.7-pg16-trixie@sha256:c28c0b700f3f1b5eec14082b31ad6e7c8a566d14386323609c615315e7c0ffc8
     command: ["postgres", "-c", "log_min_messages=DEBUG1"]
     environment:
       POSTGRES_DB: openwebui
