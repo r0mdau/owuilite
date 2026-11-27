@@ -122,7 +122,7 @@ services:
       - netopenwebui
 
   db-litellm:
-    image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
+    image: postgres:16@sha256:ce81150802644ddfac1db4da9e63be6f2a3818aa6ee98a7a28838aeea65dc37a
     command: ["postgres", "-c", "log_min_messages=DEBUG1"]
     environment:
       POSTGRES_DB: litellm
